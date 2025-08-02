@@ -23,8 +23,7 @@ class ChatRequest(BaseModel):
 def read_root():
     return {"message": "AI Media Planner backend is running."}
 
-# Main chat route
 @app.post("/chat")
 def chat(request: ChatRequest):
     response = chat_with_agent(request.prompt)
-    return {"response": str(response["output"])}
+    return {"response": response}
