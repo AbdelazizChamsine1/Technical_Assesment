@@ -4,7 +4,6 @@ from backend.logic import (get_top_channels_by_kpi, filter_by_objective, summari
 
 df = load_dataset()
 
-# Tool 1: Top-performing channels by KPI
 top_channels_tool = Tool(
     name="TopChannelsByKPI",
     func=lambda kpi: get_top_channels_by_kpi(df, kpi).to_string(index=False),
@@ -14,7 +13,6 @@ top_channels_tool = Tool(
     )
 )
 
-# Tool 2: Filter campaigns by objective
 filter_objective_tool = Tool(
     name="FilterByObjective",
     func=lambda objective: filter_by_objective(df, objective).to_string(index=False),
@@ -24,14 +22,12 @@ filter_objective_tool = Tool(
     )
 )
 
-# Tool 3: Summarize performance of each channel
 channel_summary_tool = Tool(
     name="SummarizeChannelPerformance",
     func=lambda _: summarize_channel_performance(df).to_string(index=False),
     description="Summarizes each channel's spend, cost per lead, and cost per click. Input can be empty."
 )
 
-# Tool 4: Recommend budget split based on KPI efficiency
 budget_split_tool = Tool(
     name="SuggestSpendSplit",
     func=lambda input: _parse_and_suggest_split(input),
@@ -41,7 +37,6 @@ budget_split_tool = Tool(
     )
 )
 
-# Helper function for parsing the input of SuggestSpendSplit
 def _parse_and_suggest_split(input: str) -> str:
     try:
         parts = input.strip().split()
@@ -52,7 +47,6 @@ def _parse_and_suggest_split(input: str) -> str:
         return f"Invalid input. Please use format like '10000 leads'. Error: {str(e)}"
 
 def collect_user_input(prompt: str) -> str:
-    # You can hardcode logic or just echo back
     return (
         "Before I proceed, I need a few details:\n"
         "1. What’s your campaign objective? (e.g., conversions, traffic)\n"
@@ -81,7 +75,6 @@ get_inputs_tool = Tool(
     description="Use this tool to see what objective, budget, and channel the user has provided so far."
 )
 
-# List of tools
 tools_list = [
     top_channels_tool,
     filter_objective_tool,

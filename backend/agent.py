@@ -281,7 +281,6 @@ Shall I update your plan to 85% Meta allocation?
 Remember: Always show your thinking process and base recommendations on data insights!
 """
 
-# ✅ Agent initialization
 agent = initialize_agent(
     tools=tools_list,
     llm=llm,

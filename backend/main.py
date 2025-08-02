@@ -5,7 +5,6 @@ from backend.agent import chat_with_agent
 
 app = FastAPI()
 
-# Optional: Allow frontend to access backend (adjust origins as needed)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],  # Replace with your frontend URL in production
@@ -14,11 +13,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Request model for /chat endpoint
 class ChatRequest(BaseModel):
     prompt: str
 
-# Health check
 @app.get("/")
 def read_root():
     return {"message": "AI Media Planner backend is running."}

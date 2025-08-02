@@ -55,60 +55,6 @@ def summarize_channel_performance(df: pd.DataFrame) -> pd.DataFrame:
     }).reset_index()
     return summary.sort_values("spends", ascending=False)
 
-# def suggest_spend_split(df: pd.DataFrame, budget: float, objective: str) -> pd.DataFrame:
-#     """
-#     Suggests a spend split across top-performing channels based on efficiency.
-#     Now handles channel preference for Meta and Snapchat only.
-#     """
-#     # Map objectives to KPIs
-#     objective_to_kpi = {
-#         "conversion": "leads",
-#         "conversions": "leads", 
-#         "traffic": "clicks",
-#     }
-    
-#     kpi = objective_to_kpi.get(objective.lower())
-#     if not kpi:
-#         raise ValueError(f"Objective '{objective}' not supported.")
-    
-#     # Get both channels (Meta and Snapchat)
-#     top_channels = get_top_channels_by_kpi(df, kpi, top_n=2)  # Changed to 2
-    
-#     if len(top_channels) == 0:
-#         raise ValueError("No channels found for this KPI.")
-    
-#     # Get user's channel preference from global user_inputs
-#     from backend.logic import user_inputs
-#     preferred_channel = user_inputs.get("channel")
-    
-#     if preferred_channel and preferred_channel.lower() != "none":
-#         # User has a channel preference - give it 70% of budget
-#         pref_mask = top_channels["source"].str.lower() == preferred_channel.lower()
-        
-#         if pref_mask.any():
-#             # Preferred channel exists in top performers
-#             top_channels["allocated_budget"] = 0.0  # Reset all to 0
-            
-#             # Give 70% to preferred channel
-#             top_channels.loc[pref_mask, "allocated_budget"] = budget * 0.7
-            
-#             # Give 30% to the other channel
-#             other_channels = top_channels[~pref_mask]
-#             if len(other_channels) > 0:
-#                 top_channels.loc[~pref_mask, "allocated_budget"] = budget * 0.3
-#         else:
-#             # Preferred channel not found, distribute by efficiency
-#             total_efficiency = top_channels["efficiency"].sum()
-#             top_channels["allocated_budget"] = top_channels["efficiency"] / total_efficiency * budget
-#     else:
-#         # No preference (channel: none) - distribute by efficiency
-#         total_efficiency = top_channels["efficiency"].sum()
-#         if total_efficiency == 0:
-#             raise ValueError("Total efficiency is zero.")
-#         top_channels["allocated_budget"] = top_channels["efficiency"] / total_efficiency * budget
-    
-#     return top_channels[["source", "efficiency", "allocated_budget"]]
-
 def suggest_spend_split(df: pd.DataFrame, budget: float, objective: str) -> pd.DataFrame:
     """
     Suggests a spend split between Meta and Snapchat based on efficiency and preference.
@@ -232,59 +178,6 @@ user_inputs = {
 valid_objectives = {"conversion", "traffic"}
 valid_channels = {"meta", "snapchat"}
 
-# def submit_user_inputs(input_str: str) -> str:
-#     try:
-#         text = input_str.lower()
-
-#         # --- Objective ---
-#         obj_match = re.search(r"objective\s*:\s*(\w+)", text)
-#         if obj_match:
-#             objective = obj_match.group(1).strip()
-#             if objective in valid_objectives:
-#                 user_inputs["objective"] = objective
-
-#         # --- Budget ---
-#         budget_match = re.search(r"budget\s*:\s*(\d{3,6})", text)
-#         if budget_match:
-#             user_inputs["budget"] = float(budget_match.group(1))
-
-#         # --- Channel ---
-#         ch_match = re.search(r"channel\s*:\s*([a-z\s]+)", text)
-#         if ch_match:
-#             ch = ch_match.group(1).strip()
-#             if "none" in ch or "no" in ch:
-#                 user_inputs["channel"] = None
-#             elif ch in valid_channels:
-#                 user_inputs["channel"] = ch
-
-#         # --- Validate ---
-#         if user_inputs["objective"] and user_inputs["budget"] is not None:
-#             channel_display = (
-#                 user_inputs["channel"].capitalize()
-#                 if user_inputs["channel"]
-#                 else "No preference"
-#             )
-#             return (
-#                 f"✅ Got it! Here's what I understood:\n"
-#                 f"- Objective: {user_inputs['objective'].capitalize()}\n"
-#                 f"- Budget: ${user_inputs['budget']}\n"
-#                 f"- Channel: {channel_display}\n\n"
-#                 f"You can now ask me to generate a media plan."
-#             )
-#         else:
-#             return (
-#                 f"❌ Missing or unrecognized values.\n"
-#                 f"- Objective: {user_inputs.get('objective')}\n"
-#                 f"- Budget: {user_inputs.get('budget')}\n"
-#                 f"- Channel: {user_inputs.get('channel')}\n\n"
-#                 f"✅ Please use the format: `budget: 10000, objective: conversion, channel: meta`\n"
-#                 f"Allowed objectives: {', '.join(valid_objectives)}\n"
-#                 f"Allowed channels: {', '.join(valid_channels)} or `none`"
-#             )
-
-#     except Exception as e:
-#         return f"⚠️ Error processing input: {str(e)}"
-    
 def submit_user_inputs(input_str: str) -> str:
     try:
         text = input_str.lower()
