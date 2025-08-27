@@ -1,0 +1,253 @@
+# Test Prompts for Media Planning Agent
+
+## 1. Data Analysis Questions (Should NOT trigger media plan workflow)
+
+### Basic Performance Queries
+```
+"What's the cost per lead for each channel?"
+```
+Expected: Agent uses SummarizeChannelPerformance and shows cost per lead analysis with reasoning
+
+```
+"Show me the performance summary of all channels"
+```
+Expected: Agent uses SummarizeChannelPerformance and explains efficiency differences
+
+```
+"How much did we spend on Meta last month?"
+```
+Expected: Agent uses SummarizeChannelPerformance and shows Meta spend data
+
+### Comparison Queries
+```
+"Compare Meta vs Snapchat efficiency"
+```
+Expected: Agent uses data tools and provides detailed comparison with insights
+
+```
+"Which channel has better click rates?"
+```
+Expected: Agent analyzes click data and explains the differences
+
+### Top Performers
+```
+"What are the top channels for leads?"
+```
+Expected: Agent uses TopChannelsByKPI with "leads" as input
+
+```
+"Show me the best performing channels for clicks"
+```
+Expected: Agent uses TopChannelsByKPI with "clicks" as input
+
+### Filtered Data
+```
+"Show me data for conversion campaigns only"
+```
+Expected: Agent uses FilterByObjective with "conversion" as input
+
+```
+"What's the performance of traffic campaigns?"
+```
+Expected: Agent uses FilterByObjective with "traffic" as input
+
+## 2. Media Plan Creation (Should trigger full workflow)
+
+### Complete Information in One Message
+```
+"I have a budget of 10000 for a conversion campaign and I prefer Meta"
+```
+Expected: Agent processes all inputs and automatically generates media plan
+
+```
+"Create a media plan: budget: 15000, objective: traffic, channel: snapchat"
+```
+Expected: Agent recognizes all inputs and immediately creates plan with Snapchat preference
+
+```
+"Help me plan a campaign. My budget is 20000, objective is conversion, no channel preference"
+```
+Expected: Agent processes inputs and creates efficiency-based allocation
+
+### Partial Information (Should collect missing pieces)
+```
+"I need a media plan for my campaign"
+```
+Expected: Agent asks for all 3 missing inputs
+
+```
+"Create a conversion campaign with 12000 budget"
+```
+Expected: Agent processes these 2 inputs, asks only for channel preference
+
+```
+"I want to run a campaign on Meta"
+```
+Expected: Agent stores Meta preference, asks for objective and budget
+
+### Natural Language Variations
+```
+"I've got 25k to spend on getting more leads, and I really like Meta"
+```
+Expected: Agent interprets as budget: 25000, objective: conversion, channel: meta
+
+```
+"Help me split 8000 dollars between channels for a traffic campaign"
+```
+Expected: Agent interprets correctly and asks for channel preference
+
+## 3. Campaign Updates (Should modify and regenerate)
+
+### Budget Changes
+```
+"Change my budget to 30000"
+```
+Expected: Agent updates budget and asks if user wants new plan
+
+```
+"Actually, let's increase the budget to 50000"
+```
+Expected: Agent updates and offers to regenerate plan
+
+### Objective Changes
+```
+"Switch my objective to traffic instead"
+```
+Expected: Agent updates objective and offers new plan
+
+```
+"Update objective: conversion"
+```
+Expected: Agent processes update
+
+### Channel Preference Changes
+```
+"Let's focus more on Snapchat"
+```
+Expected: Agent updates preference to Snapchat and offers to recalculate
+
+```
+"Remove my channel preference"
+```
+Expected: Agent sets preference to none and offers efficiency-based plan
+
+### Multiple Updates
+```
+"budget: 35000, objective: traffic, channel: meta"
+```
+Expected: Agent updates all values and regenerates plan
+
+## 4. Edge Cases and Error Handling
+
+### Invalid Inputs
+```
+"Create a plan for awareness campaigns"
+```
+Expected: Agent explains only conversion/traffic are valid objectives
+
+```
+"My budget is 500"
+```
+Expected: Agent accepts but might warn about small budget
+
+```
+"I prefer Google Ads"
+```
+Expected: Agent explains only Meta/Snapchat are available
+
+### Ambiguous Requests
+```
+"What should I do with my campaign?"
+```
+Expected: Agent asks for clarification
+
+```
+"Help me optimize"
+```
+Expected: Agent asks what user wants to optimize
+
+### Mixed Requests
+```
+"What's the cost per lead for Meta and also create a plan with 10000 budget"
+```
+Expected: Agent should handle data question first, then media plan
+
+## 5. Reasoning and Iteration Tests
+
+### Request for Explanation
+```
+"Why did you allocate more to Meta?"
+```
+Expected: Agent explains efficiency data and reasoning
+
+```
+"Show me the data behind this recommendation"
+```
+Expected: Agent provides performance metrics supporting allocation
+
+### Iterative Refinement
+```
+"Can we allocate even more to Meta?"
+```
+Expected: Agent shows impact of increasing Meta allocation to 85%
+
+```
+"What if we split 50/50?"
+```
+Expected: Agent explains trade-offs of equal split vs efficiency-based
+
+### What-If Scenarios
+```
+"What would happen if I doubled my budget?"
+```
+Expected: Agent shows how allocation scales
+
+```
+"How would this change for a traffic objective instead?"
+```
+Expected: Agent compares conversion vs traffic allocations
+
+## 6. Full Conversation Flows
+
+### Flow 1: Discovery to Plan
+```
+User: "How are my channels performing?"
+User: "Interesting, I want to create a campaign"
+User: "Budget is 15000, objective is conversion, prefer Meta"
+```
+Expected: Data analysis → Plan creation workflow
+
+### Flow 2: Plan then Refine
+```
+User: "budget: 20000, objective: traffic, channel: none"
+User: "Actually, let's focus on Meta"
+User: "What if we increased to 25000?"
+```
+Expected: Initial plan → Update preference → Update budget
+
+### Flow 3: Analysis-Driven Planning
+```
+User: "Which channel is best for conversions?"
+User: "OK create a plan focusing on that channel with 18000 budget"
+```
+Expected: Analysis informs plan creation
+
+## 7. Stress Tests
+
+### Missing Data Handling
+```
+"Show me cost per lead for TikTok"
+```
+Expected: Agent explains only Meta/Snapchat data available
+
+### Complex Natural Language
+```
+"I'm thinking about running a campaign next month with maybe around fifteen thousand dollars or so, probably for conversions but I'm not totally sure, and I've had good experience with Meta in the past"
+```
+Expected: Agent extracts budget: 15000, objective: conversion, channel: meta
+
+### Multiple Intents
+```
+"Show me everything about my channels and then let's make a plan"
+```
+Expected: Agent handles sequentially - data first, then plan workflow

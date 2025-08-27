@@ -1,14 +1,21 @@
 import pandas as pd
 import re
-from backend.memory import memory
+
+user_inputs = {
+    "objective": None,
+    "budget": None,
+    "channel": None
+}
+
+valid_objectives = {"conversion", "traffic"}
+valid_channels = {"meta", "snapchat"}
 
 def get_top_channels_by_kpi(df: pd.DataFrame, kpi: str, top_n: int = 3) -> pd.DataFrame:
     """
     Get top channels by KPI efficiency.
     kpi: should be 'leads' or 'clicks' (values from the KPI column)
     """
-    
-    # First, filter by KPI type
+
     kpi_lower = kpi.lower()
     filtered_df = df[df["kpi"].str.lower() == kpi_lower]
     
@@ -16,24 +23,17 @@ def get_top_channels_by_kpi(df: pd.DataFrame, kpi: str, top_n: int = 3) -> pd.Da
         available_kpis = df["kpi"].unique()
         raise ValueError(f"KPI '{kpi}' not found. Available KPIs: {available_kpis}")
     
-    # Map KPI to the actual metric column
     if kpi_lower == "leads":
         metric_col = "leads"
     elif kpi_lower == "clicks":
-        metric_col = "ad_clicks"  # Use ad_clicks column for clicks KPI
+        metric_col = "ad_clicks"
     else:
         raise ValueError(f"KPI '{kpi}' not supported. Use 'leads' or 'clicks'")
-    
-    # Group by source and sum the metrics
+
     grouped = filtered_df.groupby("source")[[metric_col, "spends"]].sum()
-    
-    # Calculate efficiency (metric per dollar spent)
     grouped["efficiency"] = grouped[metric_col] / grouped["spends"]
-    
-    # Sort by efficiency and take top N
     result = grouped.sort_values("efficiency", ascending=False).head(top_n)
-    
-    # Reset index to make 'source' a column again
+
     return result.reset_index()
 
 def filter_by_objective(df: pd.DataFrame, objective: str) -> pd.DataFrame:
@@ -60,7 +60,7 @@ def suggest_spend_split(df: pd.DataFrame, budget: float, objective: str) -> pd.D
     Suggests a spend split between Meta and Snapchat based on efficiency and preference.
     Uses a simple but smart allocation logic.
     """
-    # Map objectives to KPIs
+
     objective_to_kpi = {
         "conversion": "leads",
         "conversions": "leads", 
@@ -71,14 +71,10 @@ def suggest_spend_split(df: pd.DataFrame, budget: float, objective: str) -> pd.D
     if not kpi:
         raise ValueError(f"Objective '{objective}' not supported.")
     
-    # Get both channels' performance
     channels_data = get_top_channels_by_kpi(df, kpi, top_n=2)
     
     if len(channels_data) == 0:
         raise ValueError("No channels found for this KPI.")
-    
-    # Get user's channel preference
-    from backend.logic import user_inputs
     preferred_channel = user_inputs.get("channel")
     
     # Calculate efficiency ratio between channels
@@ -89,25 +85,22 @@ def suggest_spend_split(df: pd.DataFrame, budget: float, objective: str) -> pd.D
     snap_efficiency = snap_row["efficiency"].values[0] if len(snap_row) > 0 else 0
     total_efficiency = meta_efficiency + snap_efficiency
     
-    # Base allocation on efficiency
     if total_efficiency > 0:
         meta_base_pct = meta_efficiency / total_efficiency
         snap_base_pct = snap_efficiency / total_efficiency
     else:
-        # Equal split if no efficiency data
         meta_base_pct = 0.5
         snap_base_pct = 0.5
     
     # Apply preference adjustment
     if preferred_channel and preferred_channel.lower() != "none":
-        # Preference boost: shift 20% towards preferred channel
         PREFERENCE_BOOST = 0.2
         
         if preferred_channel.lower() == "meta":
-            meta_final_pct = min(meta_base_pct + PREFERENCE_BOOST, 0.85)  # Cap at 85%
+            meta_final_pct = min(meta_base_pct + PREFERENCE_BOOST, 0.85)
             snap_final_pct = 1 - meta_final_pct
         elif preferred_channel.lower() == "snapchat":
-            snap_final_pct = min(snap_base_pct + PREFERENCE_BOOST, 0.85)  # Cap at 85%
+            snap_final_pct = min(snap_base_pct + PREFERENCE_BOOST, 0.85)
             meta_final_pct = 1 - snap_final_pct
         else:
             # Invalid preference, use base percentages
@@ -128,10 +121,9 @@ def suggest_spend_split(df: pd.DataFrame, budget: float, objective: str) -> pd.D
         meta_final_pct = 1 - MIN_ALLOCATION
     
     # Calculate final budgets
-    meta_budget = round(budget * meta_final_pct, -2)  # Round to nearest 100
-    snap_budget = budget - meta_budget  # Ensure total equals budget
+    meta_budget = round(budget * meta_final_pct, -2)
+    snap_budget = budget - meta_budget
     
-    # Create result dataframe
     result = pd.DataFrame({
         "source": ["Meta", "Snapchat"],
         "efficiency": [meta_efficiency, snap_efficiency],
@@ -139,7 +131,6 @@ def suggest_spend_split(df: pd.DataFrame, budget: float, objective: str) -> pd.D
         "allocation_pct": [meta_final_pct * 100, snap_final_pct * 100]
     })
     
-    # Add reasoning
     result["reasoning"] = result.apply(
         lambda row: _get_simple_reasoning(
             row["source"], 
@@ -169,32 +160,20 @@ def _get_simple_reasoning(channel, allocation_pct, preferred_channel, meta_eff, 
     else:
         return f"{allocation_pct:.0f}% - Diversification"
 
-user_inputs = {
-    "objective": None,
-    "budget": None,
-    "channel": None
-}
-
-valid_objectives = {"conversion", "traffic"}
-valid_channels = {"meta", "snapchat"}
-
 def submit_user_inputs(input_str: str) -> str:
     try:
         text = input_str.lower()
 
-        # --- Objective ---
         obj_match = re.search(r"objective\s*:\s*(\w+)", text)
         if obj_match:
             objective = obj_match.group(1).strip()
             if objective in valid_objectives:
                 user_inputs["objective"] = objective
 
-        # --- Budget ---
         budget_match = re.search(r"budget\s*:\s*(\d{3,6})", text)
         if budget_match:
             user_inputs["budget"] = float(budget_match.group(1))
 
-        # --- Channel ---
         ch_match = re.search(r"channel\s*:\s*([a-z\s]+)", text)
         if ch_match:
             ch = ch_match.group(1).strip()
@@ -203,7 +182,6 @@ def submit_user_inputs(input_str: str) -> str:
             elif ch in valid_channels:
                 user_inputs["channel"] = ch
 
-        # --- Validate ---
         if user_inputs["objective"] and user_inputs["budget"] is not None:
             channel_display = (
                 user_inputs["channel"].capitalize()
@@ -238,7 +216,7 @@ def get_current_inputs(_: str = "") -> str:
     channel_display = (
         user_inputs["channel"].capitalize()
         if user_inputs["channel"]
-        else "No preference"
+        else "none"
     )
 
     return (
